@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WB + Ozon Operations Control Center</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">MARKETPLACE OPERATIONS</p>
+        <h1>WB + Ozon Control Center</h1>
+        <p id="freshness" class="muted">Загрузка данных…</p>
+      </div>
+      <span class="badge">DEMO · SYNTHETIC DATA</span>
+    </header>
+
+    <section id="kpis" class="kpi-grid"></section>
+
+    <section class="grid">
+      <article class="panel span-2">
+        <div class="panel-title"><h2>Выручка по площадкам</h2><span>Operational, не P&amp;L</span></div>
+        <div id="marketplaces" class="marketplaces"></div>
+      </article>
+      <article class="panel">
+        <div class="panel-title"><h2>Alerts</h2><span id="alert-count"></span></div>
+        <div id="alerts" class="alerts"></div>
+      </article>
+      <article class="panel span-3">
+        <div class="panel-title"><h2>SKU control</h2><span>Единый mapping WB ↔ Ozon</span></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>SKU</th><th>Товар</th><th>Продажи</th><th>Выручка</th><th>Остаток</th><th>Days of stock</th><th>ДРР</th></tr></thead>
+            <tbody id="sku-table"></tbody>
+          </table>
+        </div>
+      </article>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

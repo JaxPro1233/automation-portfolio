@@ -1,0 +1,14 @@
+{
+  "name": "wb-ozon-seller-control-center",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Credential-free portfolio demo for unified WB/Ozon seller operations analytics",
+  "scripts": {
+    "demo": "node src/demo.js",
+    "build:dashboard": "node src/build-dashboard-data.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
