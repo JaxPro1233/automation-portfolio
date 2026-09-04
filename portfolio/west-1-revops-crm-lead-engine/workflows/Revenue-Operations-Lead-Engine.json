@@ -1,5 +1,7 @@
 {
-  "name": "Portfolio — Revenue Operations Lead Engine",
+  "id": "qAzCRkAEP3w7WdN8",
+  "name": "Portfolio — Revenue Operations Lead Engine · Production Ready",
+  "active": false,
   "nodes": [
     {
       "id": "67d36f81-e18b-4193-a062-94cc960769b4",
@@ -39,7 +41,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const incoming = $json.body ?? $json;\nconst isMeta = Boolean(incoming.leadgen_id);\nconst fields = Array.isArray(incoming.field_data) ? incoming.field_data : [];\nconst field = (name) => fields.find((item) => item?.name === name)?.values?.[0] ?? null;\nconst rawLead = isMeta ? {\n  first_name: field('first_name') ?? (field('full_name') ?? '').split(' ')[0],\n  last_name: field('last_name') ?? (field('full_name') ?? '').split(' ').slice(1).join(' '),\n  email: field('email'), phone: field('phone_number'), company: field('company_name'),\n  territory: field('territory'), service: field('service'), message: field('message'),\n  consent: field('consent') !== 'false'\n} : (incoming.lead ?? incoming);\nconst clean = (value, limit = 2000) => value == null ? null : String(value)\n  .replace(/[\\u0000-\\u001F\\u007F]/g, '').replace(/<[^>]*>/g, ' ')\n  .replace(/\\s+/g, ' ').trim().slice(0, limit) || null;\nconst email = clean(rawLead.email, 320)?.toLowerCase() ?? null;\nconst digits = clean(rawLead.phone, 64)?.replace(/\\D/g, '') ?? '';\nconst phone = digits.length >= 7 && digits.length <= 15\n  ? '+' + (String(rawLead.phone).trim().startsWith('+') ? digits : '1' + digits)\n  : null;\nconst territory = clean(rawLead.territory, 50);\nconst service = clean(rawLead.service, 100);\nlet score = 0;\nconst factors = [];\nconst add = (code, points) => { score += points; factors.push({ code, points }); };\nconst publicDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];\nconst domain = email?.split('@')[1];\nif (domain && !publicDomains.includes(domain)) add('CORPORATE_EMAIL', 15);\nif (clean(rawLead.company, 200)) add('COMPANY_PRESENT', 10);\nif (service === 'crm_automation') add('TARGET_SERVICE', 25);\nif (['US-WEST', 'US-EAST', 'UK'].includes(territory)) add('SERVED_TERRITORY', 15);\nelse if (territory) add('UNSERVED_TERRITORY', -30);\nif ((clean(rawLead.message) ?? '').length >= 25) add('SPECIFIC_NEED', 15);\nif (!isMeta) add('HIGH_INTENT_SOURCE', 10);\nif (email && phone) add('TWO_CONTACT_METHODS', 10);\nif (rawLead.consent !== true) add('NO_FOLLOWUP_CONSENT', -20);\nscore = Math.max(0, Math.min(100, score));\nconst leadClass = score >= 70 ? 'HOT' : score >= 40 ? 'WARM' : 'COLD';\nconst valid = Boolean((email || phone) && (incoming.source_event_id || incoming.leadgen_id) && (!isMeta || fields.length));\nconst now = new Date();\nconst reminderMs = leadClass === 'HOT' ? 600000 : leadClass === 'WARM' ? 1800000 : 14400000;\nconst escalationMs = leadClass === 'HOT' ? 1800000 : leadClass === 'WARM' ? 7200000 : 86400000;\nconst source = isMeta ? 'meta' : 'website';\nconst sourceEventId = String(incoming.leadgen_id ?? incoming.source_event_id ?? '');\nconst ownerId = ['US-WEST', 'US-EAST'].includes(territory) && service === 'crm_automation'\n  ? 'owner-alex' : territory === 'UK' && service === 'crm_automation' ? 'owner-sam' : 'owner-fallback';\nreturn { json: {\n  event_key: source + ':' + sourceEventId,\n  source, source_event_id: sourceEventId,\n  status: valid ? 'NOTIFIED' : (isMeta && !fields.length ? 'AWAITING_META_ENRICHMENT' : 'REJECTED'),\n  lead_class: leadClass, score, owner_id: ownerId,\n  email_masked: email ? email[0] + '***@' + domain : 'not supplied',\n  phone_masked: phone ? phone.slice(0, 3) + '***' + phone.slice(-2) : 'not supplied',\n  raw_payload: JSON.stringify(incoming),\n  accepted_at: now.toISOString(),\n  reminder_due_at: new Date(now.getTime() + reminderMs).toISOString(),\n  escalation_due_at: new Date(now.getTime() + escalationMs).toISOString(),\n  reminder_status: 'PENDING', escalation_status: 'PENDING', first_action_at: null,\n  _respond: incoming._trigger_kind !== 'manual',\n  _valid: valid, factors,\n  crm_preview_url: 'https://mock-crm.local/deals/' + encodeURIComponent(source + '-' + sourceEventId)\n} };"
+        "jsCode": "const incoming = $json.body ?? $json;\nconst isMeta = Boolean(incoming.leadgen_id || (incoming.id && Array.isArray(incoming.field_data)));\nconst fields = Array.isArray(incoming.field_data) ? incoming.field_data : [];\nconst field = (name) => fields.find((item) => item?.name === name)?.values?.[0] ?? null;\nconst rawLead = isMeta ? {\n  first_name: field('first_name') ?? (field('full_name') ?? '').split(' ')[0],\n  last_name: field('last_name') ?? (field('full_name') ?? '').split(' ').slice(1).join(' '),\n  email: field('email'), phone: field('phone_number'), company: field('company_name'),\n  territory: field('territory'), service: field('service'), message: field('message'),\n  consent: field('consent') !== 'false'\n} : (incoming.lead ?? incoming);\nconst clean = (value, limit = 2000) => value == null ? null : String(value)\n  .replace(/[\\u0000-\\u001F\\u007F]/g, '').replace(/<[^>]*>/g, ' ')\n  .replace(/\\s+/g, ' ').trim().slice(0, limit) || null;\nconst email = clean(rawLead.email, 320)?.toLowerCase() ?? null;\nconst digits = clean(rawLead.phone, 64)?.replace(/\\D/g, '') ?? '';\nconst phone = digits.length >= 7 && digits.length <= 15\n  ? '+' + (String(rawLead.phone).trim().startsWith('+') ? digits : '1' + digits)\n  : null;\nconst territory = clean(rawLead.territory, 50);\nconst service = clean(rawLead.service, 100);\nlet score = 0;\nconst factors = [];\nconst add = (code, points) => { score += points; factors.push({ code, points }); };\nconst publicDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];\nconst domain = email?.split('@')[1];\nif (domain && !publicDomains.includes(domain)) add('CORPORATE_EMAIL', 15);\nif (clean(rawLead.company, 200)) add('COMPANY_PRESENT', 10);\nif (service === 'crm_automation') add('TARGET_SERVICE', 25);\nif (['US-WEST', 'US-EAST', 'UK'].includes(territory)) add('SERVED_TERRITORY', 15);\nelse if (territory) add('UNSERVED_TERRITORY', -30);\nif ((clean(rawLead.message) ?? '').length >= 25) add('SPECIFIC_NEED', 15);\nif (!isMeta) add('HIGH_INTENT_SOURCE', 10);\nif (email && phone) add('TWO_CONTACT_METHODS', 10);\nif (rawLead.consent !== true) add('NO_FOLLOWUP_CONSENT', -20);\nscore = Math.max(0, Math.min(100, score));\nconst leadClass = score >= 70 ? 'HOT' : score >= 40 ? 'WARM' : 'COLD';\nconst valid = Boolean((email || phone) && (incoming.source_event_id || incoming.leadgen_id || incoming.id) && (!isMeta || fields.length));\nconst now = new Date();\nconst reminderMs = leadClass === 'HOT' ? 600000 : leadClass === 'WARM' ? 1800000 : 14400000;\nconst escalationMs = leadClass === 'HOT' ? 1800000 : leadClass === 'WARM' ? 7200000 : 86400000;\nconst source = isMeta ? 'meta' : 'website';\nconst sourceEventId = String(incoming.leadgen_id ?? incoming.id ?? incoming.source_event_id ?? '')\n  .replace(/[^A-Za-z0-9_.:-]/g, '').slice(0, 180);\nconst ownerId = ['US-WEST', 'US-EAST'].includes(territory) && service === 'crm_automation'\n  ? 'owner-alex' : territory === 'UK' && service === 'crm_automation' ? 'owner-sam' : 'owner-fallback';\nreturn { json: {\n  event_key: source + ':' + sourceEventId,\n  source, source_event_id: sourceEventId,\n  status: valid ? 'NOTIFIED' : (isMeta && !fields.length ? 'AWAITING_META_ENRICHMENT' : 'REJECTED'),\n  lead_class: leadClass, score, owner_id: ownerId,\n  email_masked: email ? email[0] + '***@' + domain : 'not supplied',\n  phone_masked: phone ? phone.slice(0, 3) + '***' + phone.slice(-2) : 'not supplied',\n  raw_payload: JSON.stringify(incoming),\n  accepted_at: now.toISOString(),\n  reminder_due_at: new Date(now.getTime() + reminderMs).toISOString(),\n  escalation_due_at: new Date(now.getTime() + escalationMs).toISOString(),\n  reminder_status: 'PENDING', escalation_status: 'PENDING', first_action_at: null,\n  first_name: clean(rawLead.first_name, 120), last_name: clean(rawLead.last_name, 120),\n  email, phone, company: clean(rawLead.company, 200), service,\n  message: clean(rawLead.message), consent: rawLead.consent === true,\n  execution_mode: incoming._trigger_kind === 'manual' ? 'DEMO' : 'LIVE',\n  _respond: incoming._trigger_kind !== 'manual',\n  _valid: valid, factors,\n  crm_preview_url: 'https://mock-crm.local/deals/' + encodeURIComponent(source + '-' + sourceEventId)\n} };"
       }
     },
     {
@@ -60,7 +62,7 @@
           "allowedOrigins": "*"
         }
       },
-      "webhookId": "c259b21d-0bab-43b1-936c-5ee76d28193f"
+      "webhookId": "786a6807-b963-4c29-ac18-f968c055b59b"
     },
     {
       "id": "8e271d4f-8e98-41e5-8ba0-864e4def9e2d",
@@ -80,7 +82,506 @@
           "allowedOrigins": "*"
         }
       },
-      "webhookId": "b08718f7-37b5-442b-a43e-052958895f78"
+      "webhookId": "8598ff90-dccc-4892-b4e5-c3483028f080"
+    },
+    {
+      "id": "757b4149-39bd-4c6b-bc86-8418fc8f3262",
+      "name": "Meta Payload Complete?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        470,
+        500
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ Array.isArray($json.body?.field_data ?? $json.field_data) && ($json.body?.field_data ?? $json.field_data).length > 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "e707a3ea-e95a-4c4c-b0ac-33e9bb3b7877",
+      "name": "Meta · Retrieve Lead Details",
+      "type": "n8n-nodes-base.facebookGraphApi",
+      "typeVersion": 1,
+      "position": [
+        700,
+        560
+      ],
+      "parameters": {
+        "authType": "accessToken",
+        "hostUrl": "graph.facebook.com",
+        "httpRequestMethod": "GET",
+        "graphApiVersion": "v25.0",
+        "node": "={{ $json.body?.leadgen_id ?? $json.leadgen_id }}",
+        "options": {
+          "fields": {
+            "field": [
+              {
+                "name": "id"
+              },
+              {
+                "name": "created_time"
+              },
+              {
+                "name": "field_data"
+              }
+            ]
+          }
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "1f6109d5-6e53-412d-8236-a4701efdb960",
+      "name": "Deployment Mode LIVE?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1010,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.execution_mode }}",
+              "rightValue": "LIVE",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "7e7d8b0e-9058-439f-bf3f-85f53e8158a1",
+      "name": "PostgreSQL · Atomic Lead Transaction",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1260,
+        210
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH event_row AS (\n  INSERT INTO revops.lead_events (source, source_event_id, status, raw_payload)\n  VALUES ($1, $2, 'QUALIFIED', jsonb_build_object('event_key', $3))\n  ON CONFLICT (source, source_event_id) DO UPDATE SET updated_at = now()\n  RETURNING id, source, source_event_id, status\n)\nSELECT *, $3::text AS event_key FROM event_row;",
+        "options": {
+          "queryBatching": "transaction",
+          "queryReplacement": "={{ $json.source + \",\" + $json.source_event_id + \",\" + $json.event_key }}",
+          "replaceEmptyStrings": true
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "postgres": {
+          "id": "CLWPCGzoYWB86MDn",
+          "name": "KAFE PostgreSQL"
+        }
+      }
+    },
+    {
+      "id": "b6f2cb2a-1562-493a-b2d7-f815d2e43ec3",
+      "name": "HubSpot · Upsert Contact",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1510,
+        210
+      ],
+      "parameters": {
+        "resource": "contact",
+        "operation": "upsert",
+        "authentication": "appToken",
+        "email": "={{ $('Normalize Score and Route').item.json.email }}",
+        "additionalFields": {
+          "firstName": "={{ $('Normalize Score and Route').item.json.first_name }}",
+          "lastName": "={{ $('Normalize Score and Route').item.json.last_name }}",
+          "phoneNumber": "={{ $('Normalize Score and Route').item.json.phone }}",
+          "companyName": "={{ $('Normalize Score and Route').item.json.company }}",
+          "message": "={{ $('Normalize Score and Route').item.json.message }}"
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "5ded1efc-6a64-4367-8f0d-df0956a09fe0",
+      "name": "HubSpot · Find Deal by Event Key",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        210
+      ],
+      "parameters": {
+        "resource": "deal",
+        "operation": "search",
+        "authentication": "appToken",
+        "returnAll": false,
+        "limit": 1,
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "revops_event_key",
+                    "operator": "EQ",
+                    "value": "={{ $('Normalize Score and Route').item.json.event_key }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "properties": [
+            "dealname",
+            "dealstage",
+            "pipeline",
+            "revops_event_key"
+          ]
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000,
+      "alwaysOutputData": true
+    },
+    {
+      "id": "3812722f-dde5-4293-900c-ee4726f5e436",
+      "name": "HubSpot Deal Exists?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2010,
+        210
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "9b4b6618-febe-4a3d-bac6-cf2e2b72498e",
+      "name": "HubSpot · Update Existing Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        2260,
+        120
+      ],
+      "parameters": {
+        "resource": "deal",
+        "operation": "update",
+        "authentication": "appToken",
+        "dealId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "updateFields": {
+          "dealName": "={{ $('Normalize Score and Route').item.json.company + ' · ' + $('Normalize Score and Route').item.json.service }}",
+          "description": "={{ $('Normalize Score and Route').item.json.message }}"
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "cad993ba-0c5a-489d-9ac4-891062c680bc",
+      "name": "Build Lead Alert · Existing Deal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2500,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const lead = $('Normalize Score and Route').item.json;\nreturn { json: { ...$json, event_key: lead.event_key, _respond: lead._respond,\n  slack_text: '*'+lead.lead_class+' lead · '+lead.score+'/100*\\n'+lead.company+' · '+lead.email_masked+'\\nOwner: '+lead.owner_id+'\\nDeal updated: '+($json.url ?? $json.id) } };"
+      }
+    },
+    {
+      "id": "bdfbd677-ba60-46b2-8ea4-39a68ce0c836",
+      "name": "Slack · Notify Existing Deal",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.6,
+      "position": [
+        2740,
+        120
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "authentication": "accessToken",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "sales-leads"
+        },
+        "messageType": "text",
+        "text": "={{ $json.slack_text }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "webhookId": "673501c5-1f2e-4d54-b980-d5fe6f81e184",
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "3ee9bd1c-dc35-42d6-a978-c57d03928272",
+      "name": "PostgreSQL · Mark Existing Notified",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2980,
+        120
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "UPDATE revops.lead_events SET status = 'NOTIFIED', updated_at = now()\nWHERE source = $1 AND source_event_id = $2 RETURNING id, status;",
+        "options": {
+          "queryReplacement": "={{ $('Normalize Score and Route').item.json.source + ',' + $('Normalize Score and Route').item.json.source_event_id }}"
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "postgres": {
+          "id": "CLWPCGzoYWB86MDn",
+          "name": "KAFE PostgreSQL"
+        }
+      }
+    },
+    {
+      "id": "f0e03276-3f6c-481d-bc4d-3c8d2a6cc7e8",
+      "name": "Return Production Result · Existing",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3220,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const lead = $('Normalize Score and Route').item.json;\nreturn { json: { accepted: true, status: 'NOTIFIED', event_key: lead.event_key,\n  score: lead.score, lead_class: lead.lead_class, owner_id: lead.owner_id,\n  persistence: 'PostgreSQL', crm: 'HubSpot', notification: 'Slack', _respond: lead._respond } };"
+      }
+    },
+    {
+      "id": "3b920fb9-f623-41a4-836f-55e798fcb832",
+      "name": "HTTP 202 · Existing Deal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3460,
+        120
+      ],
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": 202
+        }
+      }
+    },
+    {
+      "id": "ff5edbd4-5469-4fd7-a92f-5c5540880c78",
+      "name": "HubSpot · Create Idempotent Deal",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        2260,
+        300
+      ],
+      "parameters": {
+        "resource": "deal",
+        "operation": "create",
+        "authentication": "appToken",
+        "stage": "appointmentscheduled",
+        "additionalFields": {
+          "pipeline": "default",
+          "dealName": "={{ $('Normalize Score and Route').item.json.company + ' · ' + $('Normalize Score and Route').item.json.service }}",
+          "description": "={{ $('Normalize Score and Route').item.json.message }}",
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "revops_event_key",
+                "value": "={{ $('Normalize Score and Route').item.json.event_key }}"
+              }
+            ]
+          }
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "5cf6d771-5a0a-4ccb-8396-4a96f1607f3e",
+      "name": "Build Lead Alert · New Deal",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2500,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const lead = $('Normalize Score and Route').item.json;\nreturn { json: { ...$json, event_key: lead.event_key, _respond: lead._respond,\n  slack_text: '*'+lead.lead_class+' lead · '+lead.score+'/100*\\n'+lead.company+' · '+lead.email_masked+'\\nOwner: '+lead.owner_id+'\\nDeal created: '+($json.url ?? $json.id) } };"
+      }
+    },
+    {
+      "id": "8152515e-3df8-4316-a003-bf169da5e3cb",
+      "name": "Slack · Notify New Deal",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.6,
+      "position": [
+        2740,
+        300
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "authentication": "accessToken",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "sales-leads"
+        },
+        "messageType": "text",
+        "text": "={{ $json.slack_text }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "webhookId": "3c096008-59c9-4016-b64b-90a900ffeb66",
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "0ef64be5-68a2-4daf-bd66-0ecc30c5c267",
+      "name": "PostgreSQL · Mark New Notified",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2980,
+        300
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "UPDATE revops.lead_events SET status = 'NOTIFIED', updated_at = now()\nWHERE source = $1 AND source_event_id = $2 RETURNING id, status;",
+        "options": {
+          "queryReplacement": "={{ $('Normalize Score and Route').item.json.source + ',' + $('Normalize Score and Route').item.json.source_event_id }}"
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "postgres": {
+          "id": "CLWPCGzoYWB86MDn",
+          "name": "KAFE PostgreSQL"
+        }
+      }
+    },
+    {
+      "id": "c0da5c14-e4d1-4e87-adc2-423d981526e5",
+      "name": "Return Production Result · New",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3220,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const lead = $('Normalize Score and Route').item.json;\nreturn { json: { accepted: true, status: 'NOTIFIED', event_key: lead.event_key,\n  score: lead.score, lead_class: lead.lead_class, owner_id: lead.owner_id,\n  persistence: 'PostgreSQL', crm: 'HubSpot', notification: 'Slack', _respond: lead._respond } };"
+      }
+    },
+    {
+      "id": "1b98f8da-acb6-4f18-96d3-6e24b5169bfc",
+      "name": "HTTP 202 · New Deal",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3460,
+        300
+      ],
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": 202
+        }
+      }
     },
     {
       "id": "3653feff-1c6a-45fa-97fb-fc42a7f52da3",
@@ -220,27 +721,31 @@
       }
     },
     {
-      "id": "ce90594e-024e-4086-b42c-596359a93fb4",
-      "name": "Get SLA Candidates",
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
+      "id": "4a7c82fd-e956-469d-bfc3-d91bed8a80de",
+      "name": "PostgreSQL · Lock Due SLA Candidates",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
       "position": [
         450,
         760
       ],
       "parameters": {
-        "resource": "row",
-        "operation": "get",
-        "dataTableId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "kk0YJ2G8ISulRlCu",
-          "cachedResultName": "Portfolio RevOps Lead Events"
-        },
-        "returnAll": true,
-        "orderBy": true,
-        "orderByColumn": "accepted_at",
-        "orderByDirection": "ASC"
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "SELECT sc.id AS checkpoint_id, sc.checkpoint_type AS due_type,\n       d.id AS deal_id, d.owner_id, d.crm_url, d.first_action_at\nFROM revops.sla_checkpoints sc\nJOIN revops.deals d ON d.id = sc.deal_id\nWHERE sc.status = 'PENDING' AND sc.due_at <= now() AND d.first_action_at IS NULL\nORDER BY sc.due_at ASC\nLIMIT 100\nFOR UPDATE OF sc SKIP LOCKED;",
+        "options": {
+          "queryBatching": "transaction"
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "postgres": {
+          "id": "CLWPCGzoYWB86MDn",
+          "name": "KAFE PostgreSQL"
+        }
       }
     },
     {
@@ -255,7 +760,7 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const now = Date.now();\nlet due_type = null;\nif (!$json.first_action_at && $json.reminder_status === 'PENDING' && Date.parse($json.reminder_due_at) <= now) due_type = 'REMINDER';\nelse if (!$json.first_action_at && $json.escalation_status === 'PENDING' && Date.parse($json.escalation_due_at) <= now) due_type = 'ESCALATION';\nreturn { json: {\n  ...$json,\n  due_type,\n  reminder_status: due_type === 'REMINDER' ? 'DELIVERED' : $json.reminder_status,\n  escalation_status: due_type === 'ESCALATION' ? 'DELIVERED' : $json.escalation_status\n} };"
+        "jsCode": "const due_type = ['REMINDER', 'ESCALATION'].includes($json.due_type) ? $json.due_type : null;\nreturn { json: { ...$json, due_type } };"
       }
     },
     {
@@ -289,47 +794,8 @@
       }
     },
     {
-      "id": "892b47af-6474-4788-b77b-a5955e8dd24e",
-      "name": "Mark SLA Checkpoint Delivered",
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        1240,
-        700
-      ],
-      "parameters": {
-        "resource": "row",
-        "operation": "update",
-        "dataTableId": {
-          "__rl": true,
-          "mode": "id",
-          "value": "kk0YJ2G8ISulRlCu",
-          "cachedResultName": "Portfolio RevOps Lead Events"
-        },
-        "matchType": "allConditions",
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "event_key",
-              "condition": "eq",
-              "keyValue": "={{ $json.event_key }}"
-            }
-          ]
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "reminder_status": "={{ $json.reminder_status }}",
-            "escalation_status": "={{ $json.escalation_status }}"
-          },
-          "schema": []
-        },
-        "options": {}
-      }
-    },
-    {
-      "id": "85015b32-9af6-4c5e-a98d-fec687bae2b8",
-      "name": "Build SLA Alert Preview",
+      "id": "6e849457-b0c0-4a13-9285-772a77e8b004",
+      "name": "Build SLA Alert",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -339,12 +805,328 @@
       "parameters": {
         "mode": "runOnceForEachItem",
         "language": "javaScript",
-        "jsCode": "const candidate = $('Evaluate Due SLA Checkpoint').item.json;\nreturn { json: {\n  type: 'SLA_' + candidate.due_type,\n  event_key: candidate.event_key,\n  recipient: candidate.due_type === 'ESCALATION' ? '#sales-leads' : candidate.owner_id,\n  preview: candidate.due_type + ': lead has no first sales action',\n  external_messages_sent: 0\n} };"
+        "jsCode": "const candidate = $('Evaluate Due SLA Checkpoint').item.json;\nreturn { json: {\n  type: 'SLA_' + candidate.due_type,\n  event_key: candidate.event_key,\n  recipient: candidate.due_type === 'ESCALATION' ? '#sales-leads' : candidate.owner_id,\n  preview: candidate.due_type + ': lead has no first sales action',\n  external_messages_sent: 1\n} };"
       }
     },
     {
-      "id": "ccb65c4a-afb5-4f5f-9c57-818214b8f790",
-      "name": "Sticky Note 13d8e1cb",
+      "id": "a5b1168b-7715-4cb6-a044-e1a3676f3e3e",
+      "name": "Slack · Deliver SLA Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.6,
+      "position": [
+        1750,
+        700
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "authentication": "accessToken",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "sales-leads"
+        },
+        "messageType": "text",
+        "text": "={{ $json.preview }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "webhookId": "8cfd206d-a050-45b5-af60-2320669f9685",
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "c58495ee-8c37-479b-b968-33f881a369b2",
+      "name": "PostgreSQL · Mark SLA Delivered",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1990,
+        700
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "UPDATE revops.sla_checkpoints\nSET status = 'DELIVERED', completed_at = now()\nWHERE id = $1::uuid AND status = 'PENDING'\nRETURNING id, deal_id, checkpoint_type, status;",
+        "options": {
+          "queryReplacement": "={{ $('Evaluate Due SLA Checkpoint').item.json.checkpoint_id }}"
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "postgres": {
+          "id": "CLWPCGzoYWB86MDn",
+          "name": "KAFE PostgreSQL"
+        }
+      }
+    },
+    {
+      "id": "62d6cb98-7222-429e-b16c-7ef1efc1a39a",
+      "name": "Production Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        1060
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "063cf825-3f52-4aae-8f9c-449fbe8a8455",
+      "name": "Build Safe Failure Envelope",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        430,
+        1060
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const execution = $json.execution ?? {};\nconst workflow = $json.workflow ?? {};\nconst now = new Date().toISOString();\nconst executionId = String(execution.id ?? 'unknown');\nreturn { json: {\n  failure_key: String(workflow.id ?? 'workflow') + ':' + executionId,\n  workflow_id: String(workflow.id ?? ''), execution_id: executionId,\n  failed_node: String(execution.lastNodeExecuted ?? 'unknown'),\n  error_message: String(execution.error?.message ?? 'Unknown error').slice(0, 500),\n  status: 'OPEN', attempts: 0, event_key: '', raw_payload: '{}',\n  created_at: now, updated_at: now\n} };"
+      }
+    },
+    {
+      "id": "80bf825b-dced-468e-a66f-823dac7b8c46",
+      "name": "Failure Queue · Idempotent Upsert",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        1060
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "Nycdvcip0NBtoGqe",
+          "cachedResultName": "Portfolio RevOps Failure Queue"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "failure_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.failure_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "failure_key"
+          ],
+          "value": {
+            "failure_key": "={{ $json.failure_key }}",
+            "workflow_id": "={{ $json.workflow_id }}",
+            "execution_id": "={{ $json.execution_id }}",
+            "failed_node": "={{ $json.failed_node }}",
+            "error_message": "={{ $json.error_message }}",
+            "status": "={{ $json.status }}",
+            "attempts": "={{ $json.attempts }}",
+            "event_key": "={{ $json.event_key }}",
+            "raw_payload": "={{ $json.raw_payload }}",
+            "created_at": "={{ $json.created_at }}",
+            "updated_at": "={{ $json.updated_at }}"
+          },
+          "schema": []
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "612eeca4-4a00-4d95-8053-4cea2fca4c46",
+      "name": "Slack · Notify Operations Failure",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.6,
+      "position": [
+        970,
+        1060
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "authentication": "accessToken",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "name",
+          "value": "revops-alerts"
+        },
+        "messageType": "text",
+        "text": "={{ '*RevOps automation failed*\\nNode: ' + $('Build Safe Failure Envelope').item.json.failed_node + '\\nExecution: ' + $('Build Safe Failure Envelope').item.json.execution_id }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": true
+        }
+      },
+      "webhookId": "04478eda-1f20-4953-af22-02759a094e5a",
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000
+    },
+    {
+      "id": "770efd61-1236-4032-938d-628df7c76f00",
+      "name": "POST Secure Failure Replay",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        180,
+        1280
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "portfolio/revops-leads/replay",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": ""
+        }
+      },
+      "webhookId": "4c30900b-19ec-477d-b674-d467c5cf7ad4",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g2ijLk0g3baa6iCY",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "e2fff807-d000-4195-9878-e1c1abfad7c8",
+      "name": "Failure Queue · Load Open Item",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        450,
+        1280
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "Nycdvcip0NBtoGqe",
+          "cachedResultName": "Portfolio RevOps Failure Queue"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "failure_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.body.failure_key }}"
+            },
+            {
+              "keyName": "status",
+              "condition": "eq",
+              "keyValue": "OPEN"
+            }
+          ]
+        },
+        "returnAll": false,
+        "limit": 1
+      }
+    },
+    {
+      "id": "3fc983c6-6805-4c6f-a64c-dd61deb60fcc",
+      "name": "Restore Immutable Original Event",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        1280
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const payload = JSON.parse($json.raw_payload || '{}');\npayload._trigger_kind = 'replay';\nreturn { json: payload };"
+      }
+    },
+    {
+      "id": "a70f6cbb-2ced-4e4b-9158-1cc3af958d46",
+      "name": "POST Manager First Action",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        180,
+        1480
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "portfolio/revops-leads/first-action",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": ""
+        }
+      },
+      "webhookId": "22e0227d-0717-4d88-a687-921dfda76b0a",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "g2ijLk0g3baa6iCY",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "id": "8de5e096-ef0e-4b15-9093-ae99ceef43ab",
+      "name": "PostgreSQL · Record Action and Cancel SLA",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        470,
+        1480
+      ],
+      "parameters": {
+        "resource": "database",
+        "operation": "executeQuery",
+        "query": "WITH updated_deal AS (\n  UPDATE revops.deals SET first_action_at = now(), updated_at = now()\n  WHERE id = $1::uuid AND first_action_at IS NULL RETURNING id\n)\nUPDATE revops.sla_checkpoints SET status = 'CANCELLED', completed_at = now()\nWHERE deal_id IN (SELECT id FROM updated_deal) AND status = 'PENDING'\nRETURNING deal_id, status;",
+        "options": {
+          "queryReplacement": "={{ $json.body.deal_id }}",
+          "queryBatching": "transaction"
+        }
+      },
+      "onError": "stopWorkflow",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "postgres": {
+          "id": "CLWPCGzoYWB86MDn",
+          "name": "KAFE PostgreSQL"
+        }
+      }
+    },
+    {
+      "id": "8de342a7-bc9c-4725-8bab-3c146763b5dc",
+      "name": "HTTP 200 · SLA Cancelled",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        760,
+        1480
+      ],
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "4141e7d8-d1ad-4c71-b277-9d9cb8cabf83",
+      "name": "Sticky Note d98b9d2d",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
@@ -352,31 +1134,47 @@
         270
       ],
       "parameters": {
-        "content": "## Lead capture and qualification\nWebsite, Meta-compatible and manual demo events converge on one normalization, scoring and routing boundary. Raw payload is persisted with a stable event key before any live side effect.",
+        "content": "## Capture and qualification\nWebsite and Meta webhooks run the LIVE branch. Meta notifications missing field_data are enriched through Graph API v25. Manual execution alone stays in credential-free DEMO mode.",
         "color": 5,
-        "width": 1150,
+        "width": 1130,
+        "height": 440
+      }
+    },
+    {
+      "id": "3d5ffef3-a57e-4b2f-bb63-46a57e2275ee",
+      "name": "Sticky Note 8502a896",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1210,
+        70
+      ],
+      "parameters": {
+        "content": "## Production delivery\nA PostgreSQL transaction establishes idempotency before HubSpot or Slack. Contact upsert and deal search prevent duplicates; the event is marked NOTIFIED only after Slack succeeds.",
+        "color": 3,
+        "width": 2020,
         "height": 380
       }
     },
     {
-      "id": "1b48f061-660e-44e2-a3a8-9c1f1d1d0d7f",
-      "name": "Sticky Note f07719fb",
+      "id": "81dc6b9a-502f-466e-9192-a454424908e3",
+      "name": "Sticky Note cafc3597",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        1270,
+        980,
         210
       ],
       "parameters": {
-        "content": "## Safe portfolio output\nCRM links and Slack messages are previews only. No credentials are attached and the workflow remains unpublished. Production adapters must use PostgreSQL transactions and explicit HubSpot/Slack credentials.",
-        "color": 3,
-        "width": 790,
+        "content": "## Safe deterministic demo\nThe manual trigger exercises the same scoring boundary but deliberately follows Data Table and preview nodes, so reviewers can run it without credentials or outbound messages.",
+        "color": 4,
+        "width": 1080,
         "height": 260
       }
     },
     {
-      "id": "e983f927-a818-4f89-941d-8235c9c362b2",
-      "name": "Sticky Note 27381e32",
+      "id": "e22e2613-c9b4-47f8-8683-88a0196cd809",
+      "name": "Sticky Note d219ffbb",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
@@ -384,14 +1182,29 @@
         650
       ],
       "parameters": {
-        "content": "## SLA worker\nA polling worker checks persisted deadlines. It marks a checkpoint before building the alert preview so repeated schedules do not create the same reminder twice.",
+        "content": "## SLA delivery\nPostgreSQL locks due checkpoints. The alert is built and delivered to Slack first; only a successful delivery marks the checkpoint DELIVERED.",
         "color": 6,
-        "width": 1630,
+        "width": 2110,
         "height": 260
+      }
+    },
+    {
+      "id": "b559d64e-0ab8-4e96-92e5-00097fc2c88f",
+      "name": "Sticky Note e84b43b7",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        130,
+        1010
+      ],
+      "parameters": {
+        "content": "## Recovery and operational control\nProduction failures are stored idempotently and notify RevOps. Authenticated replay restores the original event. Manager action atomically records first response and cancels pending SLA.",
+        "color": 2,
+        "width": 1090,
+        "height": 620
       }
     }
   ],
-  "pinData": {},
   "connections": {
     "Run Safe Demo": {
       "main": [
@@ -419,7 +1232,7 @@
       "main": [
         [
           {
-            "node": "Persist Idempotent Lead Event",
+            "node": "Deployment Mode LIVE?",
             "type": "main",
             "index": 0
           }
@@ -441,7 +1254,215 @@
       "main": [
         [
           {
+            "node": "Meta Payload Complete?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta Payload Complete?": {
+      "main": [
+        [
+          {
             "node": "Normalize Score and Route",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Meta · Retrieve Lead Details",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Meta · Retrieve Lead Details": {
+      "main": [
+        [
+          {
+            "node": "Normalize Score and Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deployment Mode LIVE?": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL · Atomic Lead Transaction",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Persist Idempotent Lead Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL · Atomic Lead Transaction": {
+      "main": [
+        [
+          {
+            "node": "HubSpot · Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot · Upsert Contact": {
+      "main": [
+        [
+          {
+            "node": "HubSpot · Find Deal by Event Key",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot · Find Deal by Event Key": {
+      "main": [
+        [
+          {
+            "node": "HubSpot Deal Exists?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot Deal Exists?": {
+      "main": [
+        [
+          {
+            "node": "HubSpot · Update Existing Deal",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HubSpot · Create Idempotent Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot · Update Existing Deal": {
+      "main": [
+        [
+          {
+            "node": "Build Lead Alert · Existing Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Lead Alert · Existing Deal": {
+      "main": [
+        [
+          {
+            "node": "Slack · Notify Existing Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack · Notify Existing Deal": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL · Mark Existing Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL · Mark Existing Notified": {
+      "main": [
+        [
+          {
+            "node": "Return Production Result · Existing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Production Result · Existing": {
+      "main": [
+        [
+          {
+            "node": "HTTP 202 · Existing Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot · Create Idempotent Deal": {
+      "main": [
+        [
+          {
+            "node": "Build Lead Alert · New Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Lead Alert · New Deal": {
+      "main": [
+        [
+          {
+            "node": "Slack · Notify New Deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack · Notify New Deal": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL · Mark New Notified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL · Mark New Notified": {
+      "main": [
+        [
+          {
+            "node": "Return Production Result · New",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Return Production Result · New": {
+      "main": [
+        [
+          {
+            "node": "HTTP 202 · New Deal",
             "type": "main",
             "index": 0
           }
@@ -485,14 +1506,14 @@
       "main": [
         [
           {
-            "node": "Get SLA Candidates",
+            "node": "PostgreSQL · Lock Due SLA Candidates",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Get SLA Candidates": {
+    "PostgreSQL · Lock Due SLA Candidates": {
       "main": [
         [
           {
@@ -518,18 +1539,117 @@
       "main": [
         [
           {
-            "node": "Mark SLA Checkpoint Delivered",
+            "node": "Build SLA Alert",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Mark SLA Checkpoint Delivered": {
+    "Build SLA Alert": {
       "main": [
         [
           {
-            "node": "Build SLA Alert Preview",
+            "node": "Slack · Deliver SLA Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack · Deliver SLA Alert": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL · Mark SLA Delivered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Production Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Safe Failure Envelope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Safe Failure Envelope": {
+      "main": [
+        [
+          {
+            "node": "Failure Queue · Idempotent Upsert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Failure Queue · Idempotent Upsert": {
+      "main": [
+        [
+          {
+            "node": "Slack · Notify Operations Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Secure Failure Replay": {
+      "main": [
+        [
+          {
+            "node": "Failure Queue · Load Open Item",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Failure Queue · Load Open Item": {
+      "main": [
+        [
+          {
+            "node": "Restore Immutable Original Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Immutable Original Event": {
+      "main": [
+        [
+          {
+            "node": "Normalize Score and Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Manager First Action": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL · Record Action and Cancel SLA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL · Record Action and Cancel SLA": {
+      "main": [
+        [
+          {
+            "node": "HTTP 200 · SLA Cancelled",
             "type": "main",
             "index": 0
           }
@@ -537,15 +1657,14 @@
       ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1",
     "availableInMCP": true
   },
-  "versionId": "724c6529-fa56-4361-90ee-2f6112a62c03",
+  "versionId": "e23a3743-273f-4cac-a697-2821011e368e",
   "meta": {
-    "aiBuilderAssisted": true,
-    "builderVariant": "mcp"
-  },
-  "tags": []
+    "exportedAt": "2026-09-04",
+    "credentialValuesIncluded": false,
+    "note": "Credential references only; replace auto-assigned KAFE PostgreSQL and Header Auth references before publishing."
+  }
 }

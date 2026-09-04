@@ -2,8 +2,8 @@
 
 ## WEST 1 — Revenue Operations / CRM Lead Engine
 
-**Статус:** версия 1.0, готово к проектированию и разработке
-**Тип проекта:** portfolio demonstration / production-style prototype
+**Статус:** версия 2.0, реализовано и готово к развёртыванию
+**Тип проекта:** deployment-ready production automation with safe demo mode
 **Основной язык интерфейсов и материалов:** английский
 **Язык технической документации:** русский
 

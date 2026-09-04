@@ -18,5 +18,14 @@
 - VERIFIED: SLA executions `14216`, `14217`, `14218` produced one reminder, one escalation and then no duplicate preview.
 - VERIFIED: The interactive dashboard was exercised against the local HTTP pipeline and captured in `dashboard/preview.png` with a processed HOT lead.
 - LIMITATION: PostgreSQL migrations were reviewed statically but not executed locally because `psql` is not installed; live database verification remains a deployment gate.
+- DECISION: Replaced the presentation-only n8n canvas with a deployment-ready 50-element workflow containing explicit DEMO and LIVE branches.
+- DECISION: Added a same-workflow Error Trigger, idempotent failure queue, operations alert, authenticated replay and manager-action SLA cancellation. This supersedes the earlier no-Error-Trigger assumption.
+- VERIFIED: Workflow `qAzCRkAEP3w7WdN8` validates without graph/config warnings and remains `active=false`.
+- VERIFIED: Manual execution `14255` followed only the credential-free DEMO branch and completed successfully; no PostgreSQL, Meta, HubSpot or Slack node executed.
+- VERIFIED: LIVE integrations have bounded five-attempt retry settings; SLA delivery now occurs before the checkpoint is marked `DELIVERED`.
+- DECISION: Archived superseded workflows `E7dTlwe3l5Ws6Keh` and `aSBk5whdX5lRZVtW` after the new manual verification passed.
+- DEPLOYMENT GATE: n8n automatically attached the existing `KAFE PostgreSQL` and generic `Header Auth account` credentials. The workflow is unpublished, and the runbook requires replacing these unrelated references with dedicated WEST 1 credentials before integration verification or publication.
+- VERIFIED: Empty HubSpot deal-search results are explicitly emitted into the create-deal branch; enriched Meta responses are recognized by `id + field_data`.
+- FIXED: Corrected double-escaped regex text introduced by a point update of the n8n Code node; execution `14262` reconfirmed normalized values, `HOT 100/100`, DEMO routing and zero external messages.
 - RETURN: Tech Lead review found replay could break trace references by recreating an event; replay now repeats only idempotent external steps on the immutable original event.
 - RETURN: Tech Lead review found the dashboard lacked the required working form; a localhost-only HTTP demo server now exercises the real lead engine end to end.

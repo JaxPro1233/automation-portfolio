@@ -6,7 +6,7 @@ Inbound leads arrive from forms and paid campaigns, but manual CRM entry creates
 
 ## The system
 
-This production-style prototype creates one reliable path from lead capture to sales action:
+This deployment-ready system creates one reliable path from lead capture to sales action:
 
 `capture → persist → normalize → resolve identity → score → route → CRM → notify → SLA control`
 
@@ -23,7 +23,7 @@ It accepts website and Meta-compatible lead events, preserves the raw input, pre
 
 ## Honest demo boundary
 
-The public demo uses synthetic people, a mock CRM and Slack previews. PostgreSQL migrations and live-adapter contracts are included, but no client data, production credentials or real messages are used. The n8n workflow is kept unpublished by default.
+The public demo uses synthetic people, a mock CRM and Slack previews. The same n8n canvas contains the gated LIVE path for Meta Graph API, PostgreSQL, HubSpot and Slack, plus retries, SLA delivery, failure recovery and replay. It is kept unpublished until environment-specific credentials and identifiers are assigned.
 
 ## Result
 

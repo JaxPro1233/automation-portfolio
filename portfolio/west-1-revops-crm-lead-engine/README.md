@@ -1,6 +1,6 @@
 # Revenue Operations / CRM Lead Engine
 
-Credential-free portfolio demo of a reliable inbound lead system. It captures website and Meta-compatible events, prevents duplicate contacts/deals, scores and routes leads, syncs a mock CRM, previews Slack notifications and enforces response SLA.
+Deployment-ready inbound lead system with a credential-free demonstration mode. It captures website and Meta Lead Ads events, prevents duplicate contacts/deals, scores and routes leads, synchronizes HubSpot, delivers Slack notifications and enforces response SLA.
 
 ![Revenue Operations Lead Engine dashboard](dashboard/preview.png)
 
@@ -42,6 +42,6 @@ Start with the [case study](docs/CASE_STUDY.md), then use the [acceptance checkl
 
 ## Current scope
 
-The executable demo is intentionally safe: it uses an in-memory store, mock CRM URLs, deterministic AI fallback and notification previews. It does not call HubSpot, Meta, Slack or a production database.
+The manual executable demo is intentionally safe: it uses an in-memory store, mock CRM URLs, deterministic AI fallback and notification previews. It does not call HubSpot, Meta, Slack or a production database.
 
-The supplied PostgreSQL model and adapter boundaries are ready for integration work, but live operation requires dedicated test credentials, creation of required HubSpot properties, deployment configuration and real end-to-end verification. The n8n workflow remains unpublished until that review is complete.
+The n8n workflow also includes a complete LIVE path: Meta Graph enrichment, transactional PostgreSQL inbox, HubSpot contact/deal upsert, Slack delivery, bounded retries, SLA enforcement, failure queue, authenticated replay and manager-action cancellation. Publishing is an environment-specific deployment step because credentials, HubSpot property IDs and Slack channel IDs belong to the target workspace.

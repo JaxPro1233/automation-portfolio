@@ -24,25 +24,29 @@ psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f sql/002_seed_demo.sql
 
 Do not paste `DATABASE_URL` into logs, workflow exports or screenshots.
 
-## Integration mode checklist
+## Production deployment checklist
 
-1. Create least-privilege HubSpot test credentials outside Git.
-2. Create required custom contact/deal properties and record their internal names.
-3. Configure a dedicated Slack test channel and secret Incoming Webhook URL.
-4. Configure Meta webhook verification and a versioned Graph API adapter only in a test app.
-5. Replace mock adapters without changing scoring/routing logic.
-6. Verify one event end to end, then verify duplicate delivery and 429 handling.
-7. Keep n8n unpublished until all credentials, URLs and scopes are reviewed.
+1. Apply the supplied PostgreSQL migrations to a dedicated database and assign its n8n credential to all `PostgreSQL · ...` nodes.
+2. Assign a least-privilege HubSpot private-app credential and create the unique deal property `revops_event_key`.
+3. Assign a Slack bot credential and resolve `sales-leads` and `revops-alerts` to target channel IDs.
+4. Assign the Meta Graph credential and configure the Meta webhook subscription for the production URL.
+5. Assign a dedicated Header Auth credential to replay and manager-action webhooks.
+6. Replace the automatically selected `KAFE PostgreSQL` and `Header Auth account` references; they are unrelated placeholders and must never be used for WEST 1.
+7. Run the integration acceptance matrix against test workspaces, including duplicate delivery, 429/503 retries, failure queue, replay and SLA cancellation.
+8. Publish only after the credential and destination review succeeds.
 
-## n8n demo assets
+## n8n production asset
 
-- Workflow: `Portfolio — Revenue Operations Lead Engine`
-- Workflow ID: `E7dTlwe3l5Ws6Keh`
+- Workflow: `Portfolio — Revenue Operations Lead Engine · Production Ready`
+- Workflow ID: `qAzCRkAEP3w7WdN8`
+- URL: `https://n8n-production-9bac.up.railway.app/workflow/qAzCRkAEP3w7WdN8`
 - Data Table: `Portfolio RevOps Lead Events`
 - Data Table ID: `kk0YJ2G8ISulRlCu`
-- Current state: unpublished, no assigned credentials, no external messages
+- Failure Queue: `Portfolio RevOps Failure Queue`
+- Failure Queue ID: `Nycdvcip0NBtoGqe`
+- Current state: unpublished; manual DEMO verified; no external messages sent
 
-The workflow includes a manual synthetic trigger, website and Meta-compatible webhook branches, idempotent Data Table upsert, CRM/Slack previews and a scheduled SLA preview worker. The repository JSON is the sanitized export verified after creation.
+The 50-element workflow contains a complete LIVE branch for Meta enrichment, transactional PostgreSQL persistence, HubSpot contact/deal deduplication, Slack delivery, SLA enforcement, bounded retries, error capture, authenticated replay and manager-action cancellation. Its manual trigger follows an isolated credential-free DEMO branch. The repository JSON is the sanitized export verified after creation.
 
 ## Recovery
 
@@ -52,9 +56,9 @@ The workflow includes a manual synthetic trigger, website and Meta-compatible we
 - Owner unavailable: deactivate the owner and reassign through the fallback queue.
 - n8n restart: process persisted inbox rows and due SLA checkpoints; never rely on memory.
 
-## Known limitations
+## Deployment-specific configuration
 
 - The executable demo uses an in-memory store and mock external adapters.
-- Live PostgreSQL, HubSpot, Slack and Meta calls require test credentials and deployment configuration.
+- LIVE nodes require the target organization's credentials, HubSpot property IDs, Slack channel IDs and Meta app/page configuration.
 - Full business-calendar SLA calculation is outside MVP.
 - The demo AI adapter is deterministic; a live LLM is optional and explanation-only.

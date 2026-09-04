@@ -37,4 +37,4 @@ The live adapter must use a custom unique contact property for safe partial upse
 
 ## Meta integration note
 
-A real Meta Lead Ads webhook does not normally include the complete lead form response. It provides a `leadgen_id`; the adapter must use that ID to retrieve `field_data` from the versioned Graph API. The public demo uses a sanitized enriched fixture and never claims to call Meta production APIs.
+A real Meta Lead Ads webhook does not normally include the complete lead form response. It provides a `leadgen_id`; the LIVE path retrieves `field_data` through the versioned Graph API. The manual demo uses a sanitized enriched fixture and never calls Meta.

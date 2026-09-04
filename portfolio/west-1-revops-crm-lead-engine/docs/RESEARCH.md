@@ -34,4 +34,4 @@ Verified behavior: the webhook notification supplies `leadgen_id`, page/form/ad 
 
 - [Sending messages using Incoming Webhooks](https://docs.slack.dev/messaging/sending-messages-using-incoming-webhooks) — JSON POST payloads and channel behavior.
 
-Verified behavior: an Incoming Webhook URL is a secret bound to its configured app/channel, accepts JSON such as `{ "text": "..." }`, and cannot override the destination channel at send time. The portfolio workflow stores a preview instead of calling the URL.
+Verified behavior: an Incoming Webhook URL is a secret bound to its configured app/channel, accepts JSON such as `{ "text": "..." }`, and cannot override the destination channel at send time. The manual demo stores a preview; the LIVE path uses credential-backed Slack nodes.

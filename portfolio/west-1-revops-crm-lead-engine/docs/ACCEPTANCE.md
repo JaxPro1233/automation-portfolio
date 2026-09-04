@@ -16,7 +16,7 @@
 - Manager action cancels pending SLA checkpoints.
 - No-consent leads cannot schedule nurture output.
 - Logs, exports and preview messages contain no secrets or open contact details.
-- The n8n workflow remains unpublished and credential-free by default.
+- The n8n workflow remains unpublished by default and separates safe manual DEMO execution from credential-backed LIVE webhooks.
 - `npm test`, `npm run check` and `npm run demo` succeed.
 
 ## Demo script
