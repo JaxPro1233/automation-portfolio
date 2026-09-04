@@ -1,0 +1,22 @@
+# Project log
+
+- ASSUMPTION: The public portfolio build defaults to credential-free demo mode; external writes require explicit integration configuration.
+- ASSUMPTION: PostgreSQL is the production technical source of truth, while automated local tests use an API-compatible in-memory store for reproducibility.
+- ASSUMPTION: HubSpot is the first live CRM adapter; GoHighLevel remains outside MVP.
+- ASSUMPTION: Slack Incoming Webhook is the first live notification adapter; demo mode stores notification previews only.
+- ASSUMPTION: The portfolio n8n workflow is created unpublished and credential-free to prevent accidental external side effects.
+- RESEARCH: Official Meta Lead Ads documentation confirms the webhook carries `leadgen_id`; full lead fields require a subsequent Graph API read.
+- RESEARCH: Official HubSpot documentation confirms contact lookup by email and batch upsert; partial email-based upsert is not supported.
+- RESEARCH: Official Slack documentation confirms Incoming Webhooks accept JSON POST payloads and are bound to the configured channel.
+- RESEARCH: Official n8n guidance recommends immediate raw-form persistence and a scheduled polling pattern for long-lived state such as SLA checkpoints.
+- RETURN: QA exposed `Number(null) === 0` in retry delay calculation; retry design was corrected to distinguish an absent `Retry-After` from an explicit zero delay.
+- RETURN: n8n SDK validation rejected TypeScript `as const`; workflow source was reduced to the SDK parser's documented JavaScript-compatible subset.
+- ASSUMPTION: The n8n demo uses the built-in Data Table as a credential-free persistence layer; live deployment replaces it with the supplied PostgreSQL schema.
+- ASSUMPTION: No Error Trigger was attached because the workflow is unpublished and sends no external actions; production error handling must be selected when deployment credentials and notification ownership are known.
+- VERIFIED: n8n workflow `E7dTlwe3l5Ws6Keh` was created with 18 nodes, zero credentials and `active=false`.
+- VERIFIED: Manual execution `14214` completed through normalization, Data Table upsert and CRM/Slack preview.
+- VERIFIED: SLA executions `14216`, `14217`, `14218` produced one reminder, one escalation and then no duplicate preview.
+- VERIFIED: The interactive dashboard was exercised against the local HTTP pipeline and captured in `dashboard/preview.png` with a processed HOT lead.
+- LIMITATION: PostgreSQL migrations were reviewed statically but not executed locally because `psql` is not installed; live database verification remains a deployment gate.
+- RETURN: Tech Lead review found replay could break trace references by recreating an event; replay now repeats only idempotent external steps on the immutable original event.
+- RETURN: Tech Lead review found the dashboard lacked the required working form; a localhost-only HTTP demo server now exercises the real lead engine end to end.

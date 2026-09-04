@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Credential-free Revenue Operations lead engine portfolio demo">
+  <title>RevOps Lead Engine — Portfolio Demo</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">WEST 1 · REVENUE OPERATIONS</p>
+        <h1>Every inbound lead gets an owner, a deadline, and a trace.</h1>
+        <p class="lede">A production-style CRM lead engine that prevents duplicate deals, routes enquiries by policy, and escalates missed response SLAs.</p>
+      </div>
+      <div class="mode"><span></span> Safe demo mode</div>
+    </header>
+
+    <section class="metrics" aria-label="Demo metrics">
+      <article><strong>100</strong><span>Lead score</span></article>
+      <article><strong id="contact-count">0</strong><span>Canonical contacts</span></article>
+      <article><strong id="deal-count">0</strong><span>Canonical deals</span></article>
+      <article><strong id="event-count">0</strong><span>Accepted events</span></article>
+    </section>
+
+    <section class="panel demo-form">
+      <div class="panel-title"><span>Interactive synthetic lead</span><b>POST /api/leads/website</b></div>
+      <form id="lead-form">
+        <label>First name<input name="first_name" value="Alex" required maxlength="100"></label>
+        <label>Last name<input name="last_name" value="Morgan" required maxlength="100"></label>
+        <label>Work email<input name="email" type="email" value="alex.morgan@example.com" required maxlength="320"></label>
+        <label>Phone<input name="phone" value="+1 (415) 555-0184" maxlength="64"></label>
+        <label>Company<input name="company" value="Northwind Studio" maxlength="200"></label>
+        <label>Territory<select name="territory"><option>US-WEST</option><option>US-EAST</option><option>UK</option><option>CA</option></select></label>
+        <label>Business need<textarea name="message" maxlength="2000">We need to respond to inbound leads faster and prevent duplicate CRM records.</textarea></label>
+        <label class="consent"><input name="consent" type="checkbox" checked> Consent to follow up</label>
+        <button type="submit">Process synthetic lead</button>
+      </form>
+      <pre id="form-result" aria-live="polite">Submit the form to run the real local pipeline.</pre>
+    </section>
+
+    <section class="grid">
+      <article class="panel lead-card">
+        <div class="panel-title"><span>Latest lead</span><b class="hot">HOT · 100/100</b></div>
+        <h2>Alex Morgan</h2>
+        <p>Northwind Studio · CRM automation · US West</p>
+        <dl>
+          <div><dt>Source</dt><dd>LinkedIn / revops_demo</dd></div>
+          <div><dt>Owner</dt><dd>Alex Rivera</dd></div>
+          <div><dt>CRM</dt><dd>Synced</dd></div>
+          <div><dt>SLA</dt><dd>10 min to first action</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <div class="panel-title"><span>Why this score</span><b>Rules v2026.09</b></div>
+        <ul class="factors">
+          <li><span>Corporate email</span><strong>+15</strong></li>
+          <li><span>Target CRM service</span><strong>+25</strong></li>
+          <li><span>Served territory</span><strong>+15</strong></li>
+          <li><span>Specific business need</span><strong>+15</strong></li>
+          <li><span>Two contact methods</span><strong>+10</strong></li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="panel trace">
+      <div class="panel-title"><span>Event trace</span><b>evt_web_…001</b></div>
+      <ol>
+        <li class="done"><span></span><div><strong>Webhook accepted</strong><small>Raw payload persisted before processing</small></div><time>09:30:00.000</time></li>
+        <li class="done"><span></span><div><strong>Identity resolved</strong><small>Email and phone normalized; no conflict</small></div><time>09:30:00.014</time></li>
+        <li class="done"><span></span><div><strong>Scored and routed</strong><small>HOT lead assigned by territory + round-robin</small></div><time>09:30:00.021</time></li>
+        <li class="warning"><span></span><div><strong>HubSpot rate limited</strong><small>HTTP 429 · Retry-After honored</small></div><time>09:30:00.114</time></li>
+        <li class="done"><span></span><div><strong>CRM synced</strong><small>Stable external keys prevented duplicate records</small></div><time>09:30:00.872</time></li>
+        <li class="done"><span></span><div><strong>Manager notified</strong><small>Masked contact preview stored once</small></div><time>09:30:00.910</time></li>
+      </ol>
+    </section>
+
+    <section class="grid lower">
+      <article class="panel">
+        <div class="panel-title"><span>Reliability controls</span><b>Verified</b></div>
+        <div class="chips">
+          <span>Idempotency</span><span>Identity conflict</span><span>Bounded retries</span>
+          <span>Failed queue</span><span>SLA checkpoints</span><span>Audit trail</span>
+        </div>
+      </article>
+      <article class="panel preview">
+        <div class="panel-title"><span>Slack preview</span><b>Not sent</b></div>
+        <p><strong>New HOT lead: Alex Morgan</strong><br>Northwind Studio · 100/100<br>Owner: Alex Rivera<br><em>a***@example.com · +14***84</em></p>
+      </article>
+    </section>
+
+    <footer>Portfolio demonstration built with synthetic data. No client data or live credentials.</footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

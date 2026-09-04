@@ -1,0 +1,6 @@
+.env
+node_modules/
+coverage/
+demo-output/
+*.log
+.DS_Store

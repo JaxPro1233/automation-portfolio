@@ -1,0 +1,551 @@
+{
+  "name": "Portfolio — Revenue Operations Lead Engine",
+  "nodes": [
+    {
+      "id": "67d36f81-e18b-4193-a062-94cc960769b4",
+      "name": "Run Safe Demo",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        120
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "d8275866-bc8f-4490-9672-6cad54309b27",
+      "name": "Load Synthetic Lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        430,
+        120
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "return {\n  json: {\n    _trigger_kind: 'manual',\n    event_type: 'lead.submitted',\n    occurred_at: '2026-09-04T09:30:00Z',\n    source_event_id: 'form_submission_1001',\n    lead: {\n      first_name: 'Alex', last_name: 'Morgan',\n      email: ' Alex.Morgan+demo@example.com ',\n      phone: '+1 (415) 555-0184', company: 'Northwind Studio',\n      territory: 'US-WEST', service: 'crm_automation',\n      message: 'We need to respond to inbound leads faster and prevent duplicate CRM records.',\n      consent: true\n    },\n    attribution: { utm_source: 'linkedin', utm_medium: 'paid_social', utm_campaign: 'revops_demo' }\n  }\n};"
+      }
+    },
+    {
+      "id": "f091aaf4-026d-481e-a9c5-64aae25e514b",
+      "name": "Normalize Score and Route",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const incoming = $json.body ?? $json;\nconst isMeta = Boolean(incoming.leadgen_id);\nconst fields = Array.isArray(incoming.field_data) ? incoming.field_data : [];\nconst field = (name) => fields.find((item) => item?.name === name)?.values?.[0] ?? null;\nconst rawLead = isMeta ? {\n  first_name: field('first_name') ?? (field('full_name') ?? '').split(' ')[0],\n  last_name: field('last_name') ?? (field('full_name') ?? '').split(' ').slice(1).join(' '),\n  email: field('email'), phone: field('phone_number'), company: field('company_name'),\n  territory: field('territory'), service: field('service'), message: field('message'),\n  consent: field('consent') !== 'false'\n} : (incoming.lead ?? incoming);\nconst clean = (value, limit = 2000) => value == null ? null : String(value)\n  .replace(/[\\u0000-\\u001F\\u007F]/g, '').replace(/<[^>]*>/g, ' ')\n  .replace(/\\s+/g, ' ').trim().slice(0, limit) || null;\nconst email = clean(rawLead.email, 320)?.toLowerCase() ?? null;\nconst digits = clean(rawLead.phone, 64)?.replace(/\\D/g, '') ?? '';\nconst phone = digits.length >= 7 && digits.length <= 15\n  ? '+' + (String(rawLead.phone).trim().startsWith('+') ? digits : '1' + digits)\n  : null;\nconst territory = clean(rawLead.territory, 50);\nconst service = clean(rawLead.service, 100);\nlet score = 0;\nconst factors = [];\nconst add = (code, points) => { score += points; factors.push({ code, points }); };\nconst publicDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];\nconst domain = email?.split('@')[1];\nif (domain && !publicDomains.includes(domain)) add('CORPORATE_EMAIL', 15);\nif (clean(rawLead.company, 200)) add('COMPANY_PRESENT', 10);\nif (service === 'crm_automation') add('TARGET_SERVICE', 25);\nif (['US-WEST', 'US-EAST', 'UK'].includes(territory)) add('SERVED_TERRITORY', 15);\nelse if (territory) add('UNSERVED_TERRITORY', -30);\nif ((clean(rawLead.message) ?? '').length >= 25) add('SPECIFIC_NEED', 15);\nif (!isMeta) add('HIGH_INTENT_SOURCE', 10);\nif (email && phone) add('TWO_CONTACT_METHODS', 10);\nif (rawLead.consent !== true) add('NO_FOLLOWUP_CONSENT', -20);\nscore = Math.max(0, Math.min(100, score));\nconst leadClass = score >= 70 ? 'HOT' : score >= 40 ? 'WARM' : 'COLD';\nconst valid = Boolean((email || phone) && (incoming.source_event_id || incoming.leadgen_id) && (!isMeta || fields.length));\nconst now = new Date();\nconst reminderMs = leadClass === 'HOT' ? 600000 : leadClass === 'WARM' ? 1800000 : 14400000;\nconst escalationMs = leadClass === 'HOT' ? 1800000 : leadClass === 'WARM' ? 7200000 : 86400000;\nconst source = isMeta ? 'meta' : 'website';\nconst sourceEventId = String(incoming.leadgen_id ?? incoming.source_event_id ?? '');\nconst ownerId = ['US-WEST', 'US-EAST'].includes(territory) && service === 'crm_automation'\n  ? 'owner-alex' : territory === 'UK' && service === 'crm_automation' ? 'owner-sam' : 'owner-fallback';\nreturn { json: {\n  event_key: source + ':' + sourceEventId,\n  source, source_event_id: sourceEventId,\n  status: valid ? 'NOTIFIED' : (isMeta && !fields.length ? 'AWAITING_META_ENRICHMENT' : 'REJECTED'),\n  lead_class: leadClass, score, owner_id: ownerId,\n  email_masked: email ? email[0] + '***@' + domain : 'not supplied',\n  phone_masked: phone ? phone.slice(0, 3) + '***' + phone.slice(-2) : 'not supplied',\n  raw_payload: JSON.stringify(incoming),\n  accepted_at: now.toISOString(),\n  reminder_due_at: new Date(now.getTime() + reminderMs).toISOString(),\n  escalation_due_at: new Date(now.getTime() + escalationMs).toISOString(),\n  reminder_status: 'PENDING', escalation_status: 'PENDING', first_action_at: null,\n  _respond: incoming._trigger_kind !== 'manual',\n  _valid: valid, factors,\n  crm_preview_url: 'https://mock-crm.local/deals/' + encodeURIComponent(source + '-' + sourceEventId)\n} };"
+      }
+    },
+    {
+      "id": "87dc7776-f93a-4d3e-8ae7-948a180904b8",
+      "name": "POST Website Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        180,
+        320
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "portfolio/revops-leads/website",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "c259b21d-0bab-43b1-936c-5ee76d28193f"
+    },
+    {
+      "id": "8e271d4f-8e98-41e5-8ba0-864e4def9e2d",
+      "name": "POST Meta Lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        180,
+        500
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "portfolio/revops-leads/meta",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "webhookId": "b08718f7-37b5-442b-a43e-052958895f78"
+    },
+    {
+      "id": "3653feff-1c6a-45fa-97fb-fc42a7f52da3",
+      "name": "Persist Idempotent Lead Event",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1030,
+        320
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "kk0YJ2G8ISulRlCu",
+          "cachedResultName": "Portfolio RevOps Lead Events"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "event_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.event_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "event_key"
+          ],
+          "value": {
+            "event_key": "={{ $json.event_key }}",
+            "source": "={{ $json.source }}",
+            "source_event_id": "={{ $json.source_event_id }}",
+            "status": "={{ $json.status }}",
+            "lead_class": "={{ $json.lead_class }}",
+            "score": "={{ $json.score }}",
+            "owner_id": "={{ $json.owner_id }}",
+            "email_masked": "={{ $json.email_masked }}",
+            "phone_masked": "={{ $json.phone_masked }}",
+            "raw_payload": "={{ $json.raw_payload }}",
+            "accepted_at": "={{ $json.accepted_at }}",
+            "reminder_due_at": "={{ $json.reminder_due_at }}",
+            "escalation_due_at": "={{ $json.escalation_due_at }}",
+            "reminder_status": "={{ $json.reminder_status }}",
+            "escalation_status": "={{ $json.escalation_status }}",
+            "first_action_at": "={{ $json.first_action_at }}"
+          },
+          "schema": []
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "cf3daabd-563c-486c-92c9-a192d263d8dd",
+      "name": "Build CRM and Slack Preview",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        320
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const lead = $('Normalize Score and Route').item.json;\nreturn { json: {\n  accepted: true,\n  event_key: lead.event_key,\n  status: lead.status,\n  score: lead.score,\n  lead_class: lead.lead_class,\n  owner_id: lead.owner_id,\n  crm_preview_url: lead.crm_preview_url,\n  notification_preview: 'New ' + lead.lead_class + ' lead (' + lead.score + '/100) · ' + lead.email_masked + ' · owner ' + lead.owner_id,\n  duplicate_control: 'Data Table upsert on event_key',\n  external_messages_sent: 0,\n  _respond: lead._respond\n} };"
+      }
+    },
+    {
+      "id": "afc2fd13-cb98-4fda-a81c-5c9e478724e5",
+      "name": "Webhook Request?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1570,
+        320
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json._respond }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "b1e52327-088d-4f41-b30c-da7c9a61da27",
+      "name": "Return Accepted Result",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1810,
+        260
+      ],
+      "parameters": {
+        "respondWith": "firstIncomingItem",
+        "options": {
+          "responseCode": 202
+        }
+      }
+    },
+    {
+      "id": "08d16d94-e614-4b50-90b2-3f65fb7c91c5",
+      "name": "Every Minute SLA Check",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        180,
+        760
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "ce90594e-024e-4086-b42c-596359a93fb4",
+      "name": "Get SLA Candidates",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        450,
+        760
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "kk0YJ2G8ISulRlCu",
+          "cachedResultName": "Portfolio RevOps Lead Events"
+        },
+        "returnAll": true,
+        "orderBy": true,
+        "orderByColumn": "accepted_at",
+        "orderByDirection": "ASC"
+      }
+    },
+    {
+      "id": "22651f60-12ed-4e66-ba07-2f090c4c5b8d",
+      "name": "Evaluate Due SLA Checkpoint",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        760
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const now = Date.now();\nlet due_type = null;\nif (!$json.first_action_at && $json.reminder_status === 'PENDING' && Date.parse($json.reminder_due_at) <= now) due_type = 'REMINDER';\nelse if (!$json.first_action_at && $json.escalation_status === 'PENDING' && Date.parse($json.escalation_due_at) <= now) due_type = 'ESCALATION';\nreturn { json: {\n  ...$json,\n  due_type,\n  reminder_status: due_type === 'REMINDER' ? 'DELIVERED' : $json.reminder_status,\n  escalation_status: due_type === 'ESCALATION' ? 'DELIVERED' : $json.escalation_status\n} };"
+      }
+    },
+    {
+      "id": "f1572673-635f-4b18-83b0-4af2071ca858",
+      "name": "Checkpoint Due?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        980,
+        760
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.due_type }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "892b47af-6474-4788-b77b-a5955e8dd24e",
+      "name": "Mark SLA Checkpoint Delivered",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1240,
+        700
+      ],
+      "parameters": {
+        "resource": "row",
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "kk0YJ2G8ISulRlCu",
+          "cachedResultName": "Portfolio RevOps Lead Events"
+        },
+        "matchType": "allConditions",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "event_key",
+              "condition": "eq",
+              "keyValue": "={{ $json.event_key }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "reminder_status": "={{ $json.reminder_status }}",
+            "escalation_status": "={{ $json.escalation_status }}"
+          },
+          "schema": []
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "85015b32-9af6-4c5e-a98d-fec687bae2b8",
+      "name": "Build SLA Alert Preview",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1510,
+        700
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "const candidate = $('Evaluate Due SLA Checkpoint').item.json;\nreturn { json: {\n  type: 'SLA_' + candidate.due_type,\n  event_key: candidate.event_key,\n  recipient: candidate.due_type === 'ESCALATION' ? '#sales-leads' : candidate.owner_id,\n  preview: candidate.due_type + ': lead has no first sales action',\n  external_messages_sent: 0\n} };"
+      }
+    },
+    {
+      "id": "ccb65c4a-afb5-4f5f-9c57-818214b8f790",
+      "name": "Sticky Note 13d8e1cb",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        130,
+        270
+      ],
+      "parameters": {
+        "content": "## Lead capture and qualification\nWebsite, Meta-compatible and manual demo events converge on one normalization, scoring and routing boundary. Raw payload is persisted with a stable event key before any live side effect.",
+        "color": 5,
+        "width": 1150,
+        "height": 380
+      }
+    },
+    {
+      "id": "1b48f061-660e-44e2-a3a8-9c1f1d1d0d7f",
+      "name": "Sticky Note f07719fb",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1270,
+        210
+      ],
+      "parameters": {
+        "content": "## Safe portfolio output\nCRM links and Slack messages are previews only. No credentials are attached and the workflow remains unpublished. Production adapters must use PostgreSQL transactions and explicit HubSpot/Slack credentials.",
+        "color": 3,
+        "width": 790,
+        "height": 260
+      }
+    },
+    {
+      "id": "e983f927-a818-4f89-941d-8235c9c362b2",
+      "name": "Sticky Note 27381e32",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        130,
+        650
+      ],
+      "parameters": {
+        "content": "## SLA worker\nA polling worker checks persisted deadlines. It marks a checkpoint before building the alert preview so repeated schedules do not create the same reminder twice.",
+        "color": 6,
+        "width": 1630,
+        "height": 260
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Run Safe Demo": {
+      "main": [
+        [
+          {
+            "node": "Load Synthetic Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Synthetic Lead": {
+      "main": [
+        [
+          {
+            "node": "Normalize Score and Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Score and Route": {
+      "main": [
+        [
+          {
+            "node": "Persist Idempotent Lead Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Website Lead": {
+      "main": [
+        [
+          {
+            "node": "Normalize Score and Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST Meta Lead": {
+      "main": [
+        [
+          {
+            "node": "Normalize Score and Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persist Idempotent Lead Event": {
+      "main": [
+        [
+          {
+            "node": "Build CRM and Slack Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build CRM and Slack Preview": {
+      "main": [
+        [
+          {
+            "node": "Webhook Request?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Request?": {
+      "main": [
+        [
+          {
+            "node": "Return Accepted Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every Minute SLA Check": {
+      "main": [
+        [
+          {
+            "node": "Get SLA Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get SLA Candidates": {
+      "main": [
+        [
+          {
+            "node": "Evaluate Due SLA Checkpoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluate Due SLA Checkpoint": {
+      "main": [
+        [
+          {
+            "node": "Checkpoint Due?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Checkpoint Due?": {
+      "main": [
+        [
+          {
+            "node": "Mark SLA Checkpoint Delivered",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark SLA Checkpoint Delivered": {
+      "main": [
+        [
+          {
+            "node": "Build SLA Alert Preview",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": true
+  },
+  "versionId": "724c6529-fa56-4361-90ee-2f6112a62c03",
+  "meta": {
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp"
+  },
+  "tags": []
+}

@@ -1,0 +1,24 @@
+{
+  "event_id": "evt_web_20260904_001",
+  "event_type": "lead.submitted",
+  "occurred_at": "2026-09-04T09:30:00Z",
+  "source": "website",
+  "source_event_id": "form_submission_1001",
+  "lead": {
+    "first_name": "Alex",
+    "last_name": "Morgan",
+    "email": " Alex.Morgan+demo@example.com ",
+    "phone": "+1 (415) 555-0184",
+    "company": "Northwind Studio",
+    "territory": "US-WEST",
+    "service": "crm_automation",
+    "message": "We need to respond to inbound leads faster and prevent duplicate CRM records.",
+    "consent": true
+  },
+  "attribution": {
+    "utm_source": "linkedin",
+    "utm_medium": "paid_social",
+    "utm_campaign": "revops_demo",
+    "landing_page": "/crm-automation"
+  }
+}

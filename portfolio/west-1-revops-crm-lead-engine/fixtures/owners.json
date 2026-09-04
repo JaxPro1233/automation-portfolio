@@ -1,0 +1,42 @@
+[
+  {
+    "id": "owner-alex",
+    "name": "Alex Rivera",
+    "active": true,
+    "territories": ["US-WEST", "US-EAST"],
+    "services": ["crm_automation", "revops_audit"],
+    "capacity": 5,
+    "activeLeadCount": 0,
+    "notificationTarget": "#sales-west"
+  },
+  {
+    "id": "owner-sam",
+    "name": "Sam Taylor",
+    "active": true,
+    "territories": ["US-WEST", "UK"],
+    "services": ["crm_automation"],
+    "capacity": 5,
+    "activeLeadCount": 0,
+    "notificationTarget": "#sales-west"
+  },
+  {
+    "id": "owner-inactive",
+    "name": "Former Manager",
+    "active": false,
+    "territories": ["US-WEST"],
+    "services": ["crm_automation"],
+    "capacity": 5,
+    "activeLeadCount": 0,
+    "notificationTarget": "#sales-west"
+  },
+  {
+    "id": "owner-fallback",
+    "name": "Sales Operations Queue",
+    "active": true,
+    "territories": ["*"],
+    "services": ["*"],
+    "capacity": 1000,
+    "activeLeadCount": 0,
+    "notificationTarget": "#sales-operations"
+  }
+]

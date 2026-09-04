@@ -1,0 +1,16 @@
+{
+  "name": "west-1-revops-crm-lead-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Credential-free portfolio demo for reliable inbound lead capture, dedupe, scoring, routing, CRM sync and SLA control",
+  "type": "module",
+  "scripts": {
+    "demo": "node src/demo.js",
+    "serve:demo": "node src/server.js",
+    "test": "node --test",
+    "check": "node --check src/*.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
